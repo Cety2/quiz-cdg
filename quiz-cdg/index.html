@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Dynamique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 360px;
+            height: 640px;
+            background-color: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .title-screen, .theme-screen, .question-screen, .result-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: transform 0.5s ease;
+        }
+        
+        .title-screen {
+            justify-content: center;
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            z-index: 4;
+        }
+        
+        .theme-screen {
+            justify-content: flex-start;
+            background: white;
+            transform: translateX(100%);
+            z-index: 3;
+        }
+        
+        .question-screen {
+            justify-content: space-between;
+            background: white;
+            transform: translateX(100%);
+            z-index: 2;
+        }
+        
+        .result-screen {
+            justify-content: center;
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            transform: translateX(100%);
+            z-index: 1;
+        }
+        
+        .logo {
+            font-size: 60px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+            letter-spacing: 2px;
+            margin-bottom: 50px;
+            text-align: center;
+            line-height: 1;
+        }
+        
+        .btn {
+            background: white;
+            color: #4c8bf5;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn.play {
+            background: #ffca28;
+            color: #333;
+        }
+        
+        .theme-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0 30px;
+        }
+        
+        .theme-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-height: 70%;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .theme-card {
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            border-radius: 15px;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transform: scale(1);
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .theme-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .theme-card img {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            background: white;
+            border-radius: 50%;
+            padding: 8px;
+        }
+        
+        .theme-card h3 {
+            font-size: 16px;
+        }
+        
+        .question-count {
+            align-self: flex-start;
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .option {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .option:hover {
+            border-color: #4c8bf5;
+            background: #f5f9ff;
+        }
+        
+        .option.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        
+        .option.incorrect {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        
+        .next-btn {
+            background: #4c8bf5;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+        
+        .next-btn.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .result-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .player-name-display {
+            font-size: 24px;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        /* Styles pour le résumé des résultats */
+        .summary-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            transform: translateX(100%);
+            transition: transform 0.5s ease;
+            z-index: 0;
+        }
+        
+        .summary-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .summary-list {
+            width: 100%;
+            margin-top: 20px;
+            max-height: 70%;
+            overflow-y: auto;
+        }
+        
+        .summary-item {
+            background: #f5f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .summary-question {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .summary-answer {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .summary-answer.correct {
+            background: rgba(76, 175, 80, 0.2);
+        }
+        
+        .summary-answer.incorrect {
+            background: rgba(244, 67, 54, 0.2);
+        }
+        
+        .summary-answer-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .summary-answer-text {
+            flex-grow: 1;
+        }
+        
+        .back-btn {
+            background: #4c8bf5;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .buttons-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .score {
+            font-size: 60px;
+            font-weight: bold;
+            color: #ffca28;
+            margin-bottom: 20px;
+        }
+        
+        .trophy {
+            font-size: 80px;
+            margin-bottom: 30px;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 20px;
+            background-color: #f44336;
+            opacity: 0.8;
+            animation: fall linear forwards;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(650px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Écran de titre -->
+        <div class="title-screen">
+            <div class="logo">QUIZ<br>CDG</div>
+            <div class="name-input-container" style="margin-bottom: 30px; width: 80%;">
+                <input type="text" id="player-name" placeholder="Entrez votre nom" 
+                       style="width: 100%; padding: 12px 15px; border-radius: 25px; border: none; 
+                              font-size: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            </div>
+            <button class="btn play" onclick="startQuiz()">JOUER</button>
+        </div>
+        
+        <!-- Écran de sélection des thèmes -->
+        <div class="theme-screen">
+            <h2 class="theme-title">Thèmes CF</h2>
+            <div class="theme-cards">
+                <div class="theme-card" onclick="selectTheme('Voyage de l\'église')" style="background: linear-gradient(135deg, #4caf50, #2e7d32);">
+                    <img src="/api/placeholder/80/80" alt="Voyage de l'église">
+                    <h3>Voyage de l'église</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Qui est Dieu?')" style="background: linear-gradient(135deg, #3f51b5, #303f9f);">
+                    <img src="/api/placeholder/80/80" alt="Qui est Dieu?">
+                    <h3>Qui est Dieu?</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Être dirigé par Dieu')" style="background: linear-gradient(135deg, #2196f3, #1565c0);">
+                    <img src="/api/placeholder/80/80" alt="Être dirigé par Dieu">
+                    <h3>Être dirigé par Dieu</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Le Salut 1')" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
+                    <img src="/api/placeholder/80/80" alt="Le Salut 1">
+                    <h3>Le Salut 1</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('La Bible')" style="background: linear-gradient(135deg, #f44336, #c62828);">
+                    <img src="/api/placeholder/80/80" alt="La Bible">
+                    <h3>La Bible</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Ressources de la vie intérieure')" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
+                    <img src="/api/placeholder/80/80" alt="Ressources de la vie intérieure">
+                    <h3>Ressources de la vie intérieure</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Le Baptême d\'eau')" style="background: linear-gradient(135deg, #00bcd4, #0097a7);">
+                    <img src="/api/placeholder/80/80" alt="Le Baptême d'eau">
+                    <h3>Le Baptême d'eau</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Le Salut')" style="background: linear-gradient(135deg, #607d8b, #455a64);">
+                    <img src="/api/placeholder/80/80" alt="Le Salut">
+                    <h3>Le Salut</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('L\'importance de la communauté')" style="background: linear-gradient(135deg, #e91e63, #c2185b);">
+                    <img src="/api/placeholder/80/80" alt="L'importance de la communauté">
+                    <h3>L'importance de la communauté</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Le baptême du Saint Esprit')" style="background: linear-gradient(135deg, #673ab7, #512da8);">
+                    <img src="/api/placeholder/80/80" alt="Le baptême du Saint Esprit">
+                    <h3>Le baptême du Saint Esprit</h3>
+                </div>
+                <div class="theme-card" onclick="selectTheme('Renouvellement des pensées')" style="background: linear-gradient(135deg, #795548, #5d4037);">
+                    <img src="/api/placeholder/80/80" alt="Renouvellement des pensées">
+                    <h3>Renouvellement des pensées</h3>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Écran de question -->
+        <div class="question-screen">
+            <div class="question-count">Question <span id="current-question">1</span> sur <span id="total-questions">2</span></div>
+            <div class="question-text" id="question-text">Quelle est la capitale de la France?</div>
+            <div class="options">
+                <div class="option" onclick="selectOption(this, 0)">Paris</div>
+                <div class="option" onclick="selectOption(this, 1)">Lyon</div>
+                <div class="option" onclick="selectOption(this, 2)">Marseille</div>
+                <div class="option" onclick="selectOption(this, 3)">Bordeaux</div>
+            </div>
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">Suivant</button>
+        </div>
+        
+        <!-- Écran de résultat -->
+        <div class="result-screen">
+            <div class="trophy">🏆</div>
+            <h2 class="result-title">Félicitations!</h2>
+            <div class="player-name-display" id="result-player-name">Joueur</div>
+            <div class="score">4/4</div>
+            <div class="buttons-container">
+                <button class="btn" onclick="restartQuiz()">Rejouer</button>
+                <button class="btn" onclick="showSummary()">Voir le résumé</button>
+            </div>
+        </div>
+        
+        <!-- Écran de résumé -->
+        <div class="summary-screen">
+            <h2 class="summary-title">Résumé des réponses</h2>
+            <div class="player-name-display" style="color: #333;" id="summary-player-name">Joueur</div>
+            <div class="summary-list" id="summary-list">
+                <!-- Résumé des questions et réponses généré dynamiquement ici -->
+            </div>
+            <button class="back-btn" onclick="backToResults()">Retour</button>
+        </div>
+    </div>
+    
+    <script>
+        // Données des questions avec les thèmes du document
+        const quizData = {
+            'Voyage de l\'église': [
+                {
+                    question: 'Dans quelle histoire de la bible est inspiré la migration spirituelle de Martin Luther (protestant) à Dr woodroffe (la réforme apostolique)?',
+                    options: ['L\'histoire du déluge', 'L\'histoire des enfants d\'Israël de l\'Égypte à la terre promise', 'L\'histoire de Moïse', 'L\'histoire de David'],
+                    correct: 1
+                },
+                {
+                    question: 'Dans quel livre de la bible peut-on traquer les premiers développement de l\'église?',
+                    options: ['Évangile de Jean', 'Dans le livre des actes des apôtres', 'Évangile de Matthieu', 'Épître aux Romains'],
+                    correct: 1
+                }
+            ],
+            'Qui est Dieu?': [
+                {
+                    question: 'Les écritures affirment que Dieu est une personne, il est un être et non une chose! Pourquoi ?',
+                    options: ['Il parle', 'Il agit', 'Il pense', 'Toutes les réponses'],
+                    correct: 3
+                },
+                {
+                    question: 'Peut-on affirmer que Jésus est Dieu ?',
+                    options: ['Oui, car il possède les caractéristiques de Dieu', 'Non, il est seulement le fils de Dieu', 'Peut-être', 'Ce n\'est pas clair'],
+                    correct: 0
+                }
+            ],
+            'Être dirigé par Dieu': [
+                {
+                    question: 'Quelle attitude devons nous avoir pour être vraiment dirigé par Dieu ?',
+                    options: ['S\'appuyer sur ses propres connaissances', 'Chercher activement Sa direction et développer sa relation avec Lui', 'Attendre passivement', 'Se détourner des conseils divins'],
+                    correct: 1
+                },
+                {
+                    question: 'Comment Dieu nous parle-t-Il pour nous guider ?',
+                    options: ['Uniquement par des visions', 'Par sa Parole et par le Saint Esprit', 'Uniquement après des jeûnes', 'Par des predictions astrologiques'],
+                    correct: 1
+                }
+            ],
+            'Le Salut 1': [
+                {
+                    question: 'Que signifie le salut ?',
+                    options: ['Être protégé contre les maladies', 'Être béni matériellement', 'Être transporté de la mort à la vie', 'Être libéré de ses émotions'],
+                    correct: 2
+                },
+                {
+                    question: 'Que se passe-t-il si un croyant pèche après avoir été sauvé ?',
+                    options: ['Il perd automatiquement son salut', 'Il doit être baptisé de nouveau', 'Il est exclu de l\'Église', 'Il peut être pardonné s\'il confesse son péché'],
+                    correct: 3
+                }
+            ],
+            'La Bible': [
+                {
+                    question: 'La Bible est composée de:',
+                    options: ['50 livres', '66 livres', '70 livres', '80 livres'],
+                    correct: 1
+                },
+                {
+                    question: 'La Bible est divisée en:',
+                    options: ['Ancien et Nouveau Testament', 'Ancien Testament seulement', 'Prophètes et Écrits', 'Évangiles et Épîtres'],
+                    correct: 0
+                }
+            ],
+            'Ressources de la vie intérieure': [
+                {
+                    question: 'Un style de vie basé sur la chair peut-il plaire à Dieu ?',
+                    options: ['Oui', 'Non', 'Parfois', 'Cela dépend'],
+                    correct: 1
+                },
+                {
+                    question: 'Le rôle du Saint-Esprit est de nous amener à une place de:',
+                    options: ['Richesse et de prospérité', 'Vérité et d\'authenticité', 'Santé et de bonheur', 'Protection physique'],
+                    correct: 1
+                }
+            ],
+            'Le Baptême d\'eau': [
+                {
+                    question: 'Dans Marc 16:15-19, Christ met l\'accent sur deux aspects pour être sauvés. L\'un est le baptême d\'eau, quel est l\'autre ?',
+                    options: ['Prier', 'Aimer son prochain', 'Croire', 'Servir'],
+                    correct: 2
+                },
+                {
+                    question: 'De quelle expérience fait partie le Baptême ?',
+                    options: ['Apostolique', 'Communion fraternelle', 'Salut', 'Formation'],
+                    correct: 2
+                }
+            ],
+            'Le Salut': [
+                {
+                    question: 'Lorsque Adam a désobéi à Dieu, la mort prit contrôle d\'abord de :',
+                    options: ['Son âme', 'Son esprit', 'Son corps', 'Son intelligence'],
+                    correct: 1
+                },
+                {
+                    question: 'Choisissez la bonne combinaison pour le but du salut :',
+                    options: ['Délivrer et servir Dieu', 'Délivrer et être béni', 'Être guéri et béni', 'Prier et prêcher'],
+                    correct: 0
+                }
+            ],
+            'L\'importance de la communauté': [
+                {
+                    question: 'Pourquoi devrons-nous être connectés à une communauté pour vivre pleinement notre nouvelle vie en Christ ?',
+                    options: ['Pour être enseignés et grandir spirituellement', 'Pour être divertis', 'Pour avoir des amis', 'Pour avoir un travail'],
+                    correct: 0
+                },
+                {
+                    question: 'Comment fonctionne le Centre de David ?',
+                    options: ['Comme une église traditionnelle', 'Sous un mandat prophétique et apostolique', 'Comme un centre de formation', 'Comme une ONG'],
+                    correct: 1
+                }
+            ],
+            'Le baptême du Saint Esprit': [
+                {
+                    question: 'Quel évènement marque la première manifestation publique du Saint-Esprit sur les disciples ?',
+                    options: ['Le baptême de Jésus-Christ', 'La crucifixion', 'La Pentecôte', 'L\'ascension de Jésus-Christ'],
+                    correct: 2
+                },
+                {
+                    question: 'Comment Dieu préfère-t-il l\'utilisation des dons spirituels en réunion ?',
+                    options: ['Désordre et parler en langue sans interprétation', 'Pour instruire et édifier tous', 'Seulement par des prophéties', 'Uniquement pour les leaders'],
+                    correct: 1
+                }
+            ],
+            'Renouvellement des pensées': [
+                {
+                    question: 'Quel homme porte le mieux le visage de cette bataille concernant le renouvellement des pensées dans l\'Église ?',
+                    options: ['Pierre', 'Jean', 'Apôtre Paul', 'Matthieu'],
+                    correct: 2
+                },
+                {
+                    question: 'À quoi notre système de pensées a-t-il été comparé dans le cours ?',
+                    options: ['Un champ de bataille', 'Un jardin', 'Une église', 'Une forteresse'],
+                    correct: 0
+                }
+            ]
+        };
+        
+        let playerName = '';
+        let currentTheme = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOption = null;
+        let userAnswers = [];
+        
+        function startQuiz() {
+            playerName = document.getElementById('player-name').value.trim();
+            if (!playerName) {
+                // Ajouter un effet de secousse à l'input si le nom est vide
+                const nameInput = document.getElementById('player-name');
+                nameInput.style.border = '2px solid #f44336';
+                nameInput.classList.add('shake');
+                setTimeout(() => {
+                    nameInput.classList.remove('shake');
+                }, 500);
+                return;
+            }
+            document.querySelector('.title-screen').style.transform = 'translateX(-100%)';
+            document.querySelector('.theme-screen').style.transform = 'translateX(0)';
+        }
+        
+        function selectTheme(theme) {
+            currentTheme = theme;
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = []; // Réinitialiser les réponses utilisateur
+            
+            loadQuestion();
+            
+            document.querySelector('.theme-screen').style.transform = 'translateX(-100%)';
+            document.querySelector('.question-screen').style.transform = 'translateX(0)';
+        }
+        
+        function loadQuestion() {
+            const questionData = quizData[currentTheme][currentQuestionIndex];
+            document.getElementById('current-question').textContent = currentQuestionIndex + 1;
+            document.getElementById('total-questions').textContent = quizData[currentTheme].length;
+            document.getElementById('question-text').textContent = questionData.question;
+            
+            const options = document.querySelectorAll('.option');
+            options.forEach((option, index) => {
+                option.textContent = questionData.options[index];
+                option.classList.remove('correct', 'incorrect');
+            });
+            
+            document.getElementById('next-btn').classList.remove('show');
+            selectedOption = null;
+        }
+        
+        function selectOption(element, optionIndex) {
+            if (selectedOption !== null) return;
+            
+            selectedOption = optionIndex;
+            const correctIndex = quizData[currentTheme][currentQuestionIndex].correct;
+            
+            // Enregistrer la réponse de l'utilisateur
+            userAnswers.push({
+                question: quizData[currentTheme][currentQuestionIndex].question,
+                userAnswer: quizData[currentTheme][currentQuestionIndex].options[optionIndex],
+                correctAnswer: quizData[currentTheme][currentQuestionIndex].options[correctIndex],
+                isCorrect: optionIndex === correctIndex
+            });
+            
+            if (optionIndex === correctIndex) {
+                element.classList.add('correct');
+                score++;
+            } else {
+                element.classList.add('incorrect');
+                document.querySelectorAll('.option')[correctIndex].classList.add('correct');
+            }
+            
+            document.getElementById('next-btn').classList.add('show');
+        }
+        
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < quizData[currentTheme].length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+        
+        function showResult() {
+            document.querySelector('.question-screen').style.transform = 'translateX(-100%)';
+            document.querySelector('.result-screen').style.transform = 'translateX(0)';
+            
+            // Afficher le nom du joueur
+            document.getElementById('result-player-name').textContent = playerName;
+            
+            document.querySelector('.score').textContent = score + '/' + quizData[currentTheme].length;
+            
+            // Préparer le résumé des résultats (bien que caché pour l'instant)
+            document.getElementById('summary-player-name').textContent = playerName;
+            
+            // Créer les confettis pour la célébration
+            createConfetti();
+        }
+        
+        function showSummary() {
+            // Générer le résumé des réponses
+            const summaryList = document.getElementById('summary-list');
+            summaryList.innerHTML = '';
+            
+            userAnswers.forEach((answer, index) => {
+                const summaryItem = document.createElement('div');
+                summaryItem.className = 'summary-item';
+                
+                const questionEl = document.createElement('div');
+                questionEl.className = 'summary-question';
+                questionEl.textContent = `Question ${index + 1}: ${answer.question}`;
+                
+                const userAnswerEl = document.createElement('div');
+                userAnswerEl.className = answer.isCorrect ? 'summary-answer correct' : 'summary-answer incorrect';
+                
+                const iconEl = document.createElement('span');
+                iconEl.className = 'summary-answer-icon';
+                iconEl.textContent = answer.isCorrect ? '✅' : '❌';
+                
+                const textEl = document.createElement('span');
+                textEl.className = 'summary-answer-text';
+                textEl.textContent = `Votre réponse: ${answer.userAnswer}`;
+                
+                userAnswerEl.appendChild(iconEl);
+                userAnswerEl.appendChild(textEl);
+                
+                summaryItem.appendChild(questionEl);
+                summaryItem.appendChild(userAnswerEl);
+                
+                if (!answer.isCorrect) {
+                    const correctAnswerEl = document.createElement('div');
+                    correctAnswerEl.className = 'summary-answer correct';
+                    
+                    const correctIconEl = document.createElement('span');
+                    correctIconEl.className = 'summary-answer-icon';
+                    correctIconEl.textContent = '✓';
+                    
+                    const correctTextEl = document.createElement('span');
+                    correctTextEl.className = 'summary-answer-text';
+                    correctTextEl.textContent = `Réponse correcte: ${answer.correctAnswer}`;
+                    
+                    correctAnswerEl.appendChild(correctIconEl);
+                    correctAnswerEl.appendChild(correctTextEl);
+                    
+                    summaryItem.appendChild(correctAnswerEl);
+                }
+                
+                summaryList.appendChild(summaryItem);
+            });
+            
+            // Afficher l'écran de résumé
+            document.querySelector('.result-screen').style.transform = 'translateX(-100%)';
+            document.querySelector('.summary-screen').style.transform = 'translateX(0)';
+        }
+        
+        function backToResults() {
+            // Retourner à l'écran de résultat
+            document.querySelector('.summary-screen').style.transform = 'translateX(100%)';
+            document.querySelector('.result-screen').style.transform = 'translateX(0)';
+        }
+        
+        function createConfetti() {
+            const colors = ['#f44336', '#2196f3', '#ffeb3b', '#4caf50', '#9c27b0'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 360 + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 20 + 10 + 'px';
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                confetti.style.animationDelay = Math.random() * 5 + 's';
+                
+                document.querySelector('.result-screen').appendChild(confetti);
+            }
+        }
+        
+        function restartQuiz() {
+            // Supprimer les confettis
+            document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
+            
+            // Réinitialiser les données du quiz
+            userAnswers = [];
+            
+            document.querySelector('.result-screen').style.transform = 'translateX(100%)';
+            document.querySelector('.summary-screen').style.transform = 'translateX(100%)';
+            document.querySelector('.theme-screen').style.transform = 'translateX(0)';
+        }
+    </script>
+</body>
+</html>
