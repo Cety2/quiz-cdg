@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Résultats Quiz CDG</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(76, 139, 245, 0.3);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.6s ease;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header h1::before {
+            content: '📊';
+            font-size: 24px;
+        }
+        
+        .filters {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            animation: slideUp 0.6s ease 0.1s backwards;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        select, input {
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4c8bf5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(76, 139, 245, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(76, 139, 245, 0.3);
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(76, 139, 245, 0.4);
+        }
+        
+        .btn.export {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        }
+        
+        .btn.export:hover {
+            box-shadow: 0 6px 16px rgba(46, 204, 113, 0.4);
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: slideUp 0.6s ease 0.2s backwards;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4c8bf5, #5865f2);
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        
+        .summary-card h3 {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .summary-card .value {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+        
+        .summary-card .icon {
+            font-size: 28px;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+        
+        .results-table {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+            animation: slideUp 0.6s ease 0.3s backwards;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 600px;
+        }
+        
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        td {
+            font-size: 14px;
+            color: #374151;
+            border-top: 1px solid #f3f4f6;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .score-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+        
+        .excellent {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .good {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .average {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .poor {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .view-details {
+            color: #4c8bf5;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .view-details:hover {
+            color: #3a7bd5;
+            text-decoration: underline;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+            padding: 16px;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        
+        .modal-header h2 {
+            font-size: 24px;
+            color: #1f2937;
+            font-weight: 700;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #9ca3af;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .close:hover {
+            color: #374151;
+            background: #f3f4f6;
+        }
+        
+        .theme-detail {
+            background: linear-gradient(135deg, #f9fafb, #ffffff);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .theme-detail h3 {
+            color: #1f2937;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .theme-detail p {
+            color: #4b5563;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+        
+        .question-detail {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .question-detail:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .question-detail p {
+            margin-bottom: 6px;
+            color: #4b5563;
+            font-size: 14px;
+        }
+        
+        .correct-answer {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .incorrect-answer {
+            color: #dc2626;
+            font-weight: 600;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 24px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .pagination button {
+            padding: 8px 16px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #374151;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            border-color: #4c8bf5;
+            color: #4c8bf5;
+            background: #f0f7ff;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .pagination button.active {
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-top: 20px;
+            animation: slideUp 0.6s ease 0.4s backwards;
+        }
+        
+        .chart-container h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4c8bf5, #5865f2);
+            transition: width 0.8s ease;
+            box-shadow: 0 1px 2px rgba(76, 139, 245, 0.3);
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 16px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .btn.export {
+                width: 100%;
+                margin-top: 8px;
+            }
+            
+            .filters {
+                padding: 12px;
+            }
+            
+            .summary-cards {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 12px;
+            }
+            
+            .summary-card {
+                padding: 16px;
+            }
+            
+            .summary-card .value {
+                font-size: 28px;
+            }
+            
+            .summary-card .icon {
+                font-size: 24px;
+            }
+            
+            th, td {
+                padding: 8px 12px;
+            }
+            
+            .modal-content {
+                padding: 16px;
+            }
+            
+            .modal-header h2 {
+                font-size: 20px;
+            }
+            
+            .chart-container {
+                padding: 16px;
+            }
+            
+            .pagination button {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .pagination button {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            #page-info {
+                order: -1;
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Administration Quiz CDG</h1>
+            <button class="btn export" onclick="exportData()">✨ Exporter les données</button>
+        </div>
+        
+        <div class="filters">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Joueur</label>
+                    <select id="player-filter">
+                        <option value="">Tous les joueurs</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Thème</label>
+                    <select id="theme-filter">
+                        <option value="">Tous les thèmes</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Date</label>
+                    <input type="date" id="date-filter">
+                </div>
+            </div>
+            <button class="btn" onclick="applyFilters()">Appliquer</button>
+        </div>
+        
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3>Total Joueurs</h3>
+                <div class="value" id="total-players">0</div>
+                <div class="icon">👥</div>
+            </div>
+            <div class="summary-card">
+                <h3>Quiz Complétés</h3>
+                <div class="value" id="total-quizzes">0</div>
+                <div class="icon">📚</div>
+            </div>
+            <div class="summary-card">
+                <h3>Score Moyen</h3>
+                <div class="value" id="average-score">0%</div>
+                <div class="icon">⭐</div>
+            </div>
+            <div class="summary-card">
+                <h3>Meilleur Score</h3>
+                <div class="value" id="best-score">0%</div>
+                <div class="icon">🏆</div>
+            </div>
+        </div>
+        
+        <div class="results-table">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Joueur</th>
+                            <th>Date</th>
+                            <th>Thème</th>
+                            <th>Score</th>
+                            <th>Temps</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Les résultats seront générés dynamiquement ici -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="pagination">
+            <button onclick="changePage(-1)">← Précédent</button>
+            <span id="page-info">Page 1 sur 1</span>
+            <button onclick="changePage(1)">Suivant →</button>
+        </div>
+        
+        <div class="chart-container">
+            <h2>📊 Statistiques par Thème</h2>
+            <div id="theme-stats">
+                <!-- Les statistiques par thème seront générées ici -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Détails du Quiz</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modal-body">
+                <!-- Le contenu détaillé sera généré dynamiquement ici -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Variables globales
+        let currentPage = 1;
+        const resultsPerPage = 10;
+        let filteredData = [];
+        
+        // Simulation de données (en production, ces données viendraient d'une base de données)
+        let sampleData = [];
+
+async function fetchData() {
+    try {
+        const res = await fetch('/api/get-results');
+        sampleData = await res.json();
+        initializePage(); // Appel après chargement des données
+    } catch (e) {
+        console.error('Erreur chargement des données :', e);
+    }
+}
+        
+        // Fonction initializePage (appelée au chargement)
+        function initializePage() {
+            filteredData = [...sampleData];
+            populateFilters();
+            updateSummaryCards();
+            displayResults();
+            showThemeStats();
+        }
+        
+        // Fonction populateFilters
+        function populateFilters() {
+            const playerFilter = document.getElementById('player-filter');
+            const themeFilter = document.getElementById('theme-filter');
+            
+            const players = [...new Set(sampleData.map(d => d.player))];
+            const themes = [...new Set(sampleData.map(d => d.theme))];
+            
+            players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player;
+                option.textContent = player;
+                playerFilter.appendChild(option);
+            });
+            
+            themes.forEach(theme => {
+                const option = document.createElement('option');
+                option.value = theme;
+                option.textContent = theme;
+                themeFilter.appendChild(option);
+            });
+        }
+        
+        // Fonction applyFilters
+        function applyFilters() {
+            const playerFilter = document.getElementById('player-filter').value;
+            const themeFilter = document.getElementById('theme-filter').value;
+            const dateFilter = document.getElementById('date-filter').value;
+            
+            filteredData = sampleData.filter(item => {
+                return (!playerFilter || item.player === playerFilter) &&
+                       (!themeFilter || item.theme === themeFilter) &&
+                       (!dateFilter || item.date === dateFilter);
+            });
+            
+            currentPage = 1;
+            updateSummaryCards();
+            displayResults();
+            showThemeStats();
+        }
+        
+        // Fonction updateSummaryCards
+        function updateSummaryCards() {
+            const totalPlayers = new Set(filteredData.map(d => d.player)).size;
+            const totalQuizzes = filteredData.length;
+            
+            let totalScore = 0;
+            let maxScore = 0;
+            
+            filteredData.forEach(item => {
+                const percentage = (item.score / item.total) * 100;
+                totalScore += percentage;
+                maxScore = Math.max(maxScore, percentage);
+            });
+            
+            const averageScore = totalQuizzes ? totalScore / totalQuizzes : 0;
+            
+            document.getElementById('total-players').textContent = totalPlayers;
+            document.getElementById('total-quizzes').textContent = totalQuizzes;
+            document.getElementById('average-score').textContent = `${averageScore.toFixed(1)}%`;
+            document.getElementById('best-score').textContent = `${maxScore.toFixed(0)}%`;
+        }
+        
+        // Fonction getScoreBadgeClass
+        function getScoreBadgeClass(score, total) {
+            const percentage = (score / total) * 100;
+            if (percentage >= 90) return 'excellent';
+            if (percentage >= 70) return 'good';
+            if (percentage >= 50) return 'average';
+            return 'poor';
+        }
+        
+        // Fonction getScoreBadgeText
+        function getScoreBadgeText(score, total) {
+            const percentage = (score / total) * 100;
+            if (percentage >= 90) return 'Excellent';
+            if (percentage >= 70) return 'Bien';
+            if (percentage >= 50) return 'Moyen';
+            return 'À améliorer';
+        }
+        
+        // Fonction displayResults
+        function displayResults() {
+            const tbody = document.getElementById('results-body');
+            tbody.innerHTML = '';
+            
+            const start = (currentPage - 1) * resultsPerPage;
+            const end = start + resultsPerPage;
+            const pageData = filteredData.slice(start, end);
+            
+            pageData.forEach(result => {
+                const row = document.createElement('tr');
+                const scorePercentage = (result.score / result.total) * 100;
+                
+                row.innerHTML = `
+                    <td>${result.player}</td>
+                    <td>${result.date}</td>
+                    <td>${result.theme}</td>
+                    <td>
+                        ${result.score}/${result.total} 
+                        <span class="score-badge ${getScoreBadgeClass(result.score, result.total)}">
+                            ${getScoreBadgeText(result.score, result.total)}
+                        </span>
+                    </td>
+                    <td>${result.timeElapsed}</td>
+                    <td>
+                        <span class="view-details" onclick="showDetails(${result.id})">Détails →</span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            updatePagination();
+        }
+        
+        // Fonction updatePagination
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / resultsPerPage);
+            const pageInfo = document.getElementById('page-info');
+            const prevButton = document.querySelector('.pagination button:first-child');
+            const nextButton = document.querySelector('.pagination button:last-child');
+            
+            pageInfo.textContent = `Page ${currentPage} sur ${totalPages}`;
+            prevButton.disabled = currentPage === 1;
+            nextButton.disabled = currentPage === totalPages;
+        }
+        
+        // Fonction changePage (correction du bug)
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredData.length / resultsPerPage);
+            currentPage += direction;
+            
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            displayResults();
+        }
+        
+        // Fonction showDetails
+        function showDetails(id) {
+            const result = sampleData.find(r => r.id === id);
+            const modal = document.getElementById('details-modal');
+            const modalBody = document.getElementById('modal-body');
+            
+            let content = `
+                <div class="theme-detail">
+                    <h3>${result.player} - ${result.theme}</h3>
+                    <p>📅 Date: ${result.date}</p>
+                    <p>🎯 Score: ${result.score}/${result.total} (${((result.score/result.total)*100).toFixed(1)}%)</p>
+                    <p>⏱️ Temps écoulé: ${result.timeElapsed}</p>
+                </div>
+                <h4 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">📋 Détail des réponses:</h4>
+            `;
+            
+            result.answers.forEach((answer, index) => {
+                content += `
+                    <div class="question-detail">
+                        <p><strong>Question ${index + 1}:</strong> ${answer.question}</p>
+                        <p class="${answer.isCorrect ? 'correct-answer' : 'incorrect-answer'}">
+                            ${answer.isCorrect ? '✅' : '❌'} Votre réponse: ${answer.userAnswer}
+                        </p>
+                        ${!answer.isCorrect ? `<p class="correct-answer">✅ Réponse correcte: ${answer.correctAnswer}</p>` : ''}
+                    </div>
+                `;
+            });
+            
+            modalBody.innerHTML = content;
+            modal.style.display = 'flex';
+        }
+        
+        // Fonction closeModal
+        function closeModal() {
+            const modal = document.getElementById('details-modal');
+            modal.style.display = 'none';
+        }
+        
+        // Fonction showThemeStats
+        function showThemeStats() {
+            const themeStats = document.getElementById('theme-stats');
+            const stats = {};
+            
+            // Calculer les statistiques par thème
+            filteredData.forEach(item => {
+                if (!stats[item.theme]) {
+                    stats[item.theme] = {
+                        totalQuizzes: 0,
+                        totalScore: 0,
+                        totalPossible: 0
+                    };
+                }
+                
+                stats[item.theme].totalQuizzes++;
+                stats[item.theme].totalScore += item.score;
+                stats[item.theme].totalPossible += item.total;
+            });
+            
+            // Afficher les statistiques
+            let content = '';
+            Object.keys(stats).forEach(theme => {
+                const stat = stats[theme];
+                const averagePercentage = (stat.totalScore / stat.totalPossible) * 100;
+                
+                content += `
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1f2937;">${theme}</h3>
+                        <p style="color: #6b7280; margin-bottom: 4px;">Quiz complétés: ${stat.totalQuizzes}</p>
+                        <p style="color: #6b7280; margin-bottom: 10px;">Score moyen: ${averagePercentage.toFixed(1)}%</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${averagePercentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            themeStats.innerHTML = content;
+        }
+        
+        // Fonction exportData
+        function exportData() {
+            // Convertir les données en CSV
+            let csv = 'Joueur,Date,Thème,Score,Pourcentage,Temps Écoulé\n';
+            
+            filteredData.forEach(result => {
+                const percentage = ((result.score / result.total) * 100).toFixed(1);
+                csv += `"${result.player}","${result.date}","${result.theme}",${result.score}/${result.total},${percentage}%,"${result.timeElapsed}"\n`;
+            });
+            
+            // Créer un blob et télécharger
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `quiz_results_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+        
+        // Fermer la modale en cliquant en dehors
+        window.onclick = function(event) {
+            const modal = document.getElementById('details-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+        
+        // Initialiser la page au chargement
+        window.onload = fetchData;
+    </script>
+</body>
+</html>

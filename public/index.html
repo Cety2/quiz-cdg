@@ -1034,6 +1034,10 @@
             
             // Sauvegarder les réponses pour ce thème (pour le résumé global)
             themeAnswers[currentTheme] = userAnswers.slice();
+
+            // Envoi des résultats à la base de données
+            sendResultsToServer(currentTheme, score, quizData[currentTheme].length, userAnswers);
+
             
             document.querySelector('.score').textContent = score + '/' + quizData[currentTheme].length;
             
@@ -1138,6 +1142,26 @@
             initThemeButtons();
             updateThemeScores();
         }
+
+        function sendResultsToServer(theme, score, total, answers) {
+    fetch('http://localhost:3000/api/save-results', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            player: playerName,
+            theme: theme,
+            score: score,
+            total: total,
+            answers: answers
+        })
+    })
+    .then(res => res.json())
+    .then(data => console.log("Données enregistrées :", data))
+    .catch(error => console.error("Erreur d'envoi :", error));
+}
+
     </script>
 </body>
 </html>
