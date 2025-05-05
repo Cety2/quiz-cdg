@@ -31,7 +31,7 @@
             position: relative;
         }
         
-        .title-screen, .theme-screen, .question-screen, .result-screen {
+        .title-screen, .theme-screen, .question-screen, .result-screen, .summary-screen, .global-summary-screen {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -45,26 +45,38 @@
         .title-screen {
             justify-content: center;
             background: linear-gradient(135deg, #4c8bf5, #5865f2);
-            z-index: 4;
+            z-index: 6;
         }
         
         .theme-screen {
             justify-content: flex-start;
             background: white;
             transform: translateX(100%);
-            z-index: 3;
+            z-index: 5;
         }
         
         .question-screen {
             justify-content: space-between;
             background: white;
             transform: translateX(100%);
-            z-index: 2;
+            z-index: 4;
         }
         
         .result-screen {
             justify-content: center;
             background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            transform: translateX(100%);
+            z-index: 3;
+        }
+        
+        .summary-screen {
+            background: white;
+            transform: translateX(100%);
+            z-index: 2;
+        }
+        
+        .global-summary-screen {
+            background: white;
             transform: translateX(100%);
             z-index: 1;
         }
@@ -131,6 +143,7 @@
             transform: scale(1);
             transition: all 0.3s;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
         
         .theme-card:hover {
@@ -149,6 +162,20 @@
         
         .theme-card h3 {
             font-size: 16px;
+            flex-grow: 1;
+        }
+        
+        .theme-score {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: 10px;
         }
         
         .question-count {
@@ -244,21 +271,6 @@
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
             20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        
-        /* Styles pour le résumé des résultats */
-        .summary-screen {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background: white;
-            transform: translateX(100%);
-            transition: transform 0.5s ease;
-            z-index: 0;
         }
         
         .summary-title {
@@ -365,6 +377,86 @@
                 transform: translateY(650px);
             }
         }
+        
+        /* Styles pour le résumé global */
+        .global-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .global-summary-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+        
+        .theme-summary-card {
+            background: #f5f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .theme-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .theme-summary-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .theme-summary-score {
+            background: #4c8bf5;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+        
+        .theme-summary-content {
+            display: none;
+            margin-top: 10px;
+        }
+        
+        .theme-summary-card.expanded .theme-summary-content {
+            display: block;
+        }
+        
+        .expand-icon {
+            cursor: pointer;
+            user-select: none;
+            margin-left: 10px;
+        }
+        
+        .global-total-score {
+            background: linear-gradient(135deg, #4c8bf5, #5865f2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .global-total-score h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .global-total-score .score-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -378,55 +470,62 @@
                               font-size: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
             </div>
             <button class="btn play" onclick="startQuiz()">JOUER</button>
+            <div id="total-score" style="margin-top: 20px; color: white; font-size: 18px; display: none;"></div>
         </div>
         
         <!-- Écran de sélection des thèmes -->
         <div class="theme-screen">
             <h2 class="theme-title">Thèmes CF</h2>
+            <div id="screen-total-score" style="text-align: center; font-size: 16px; color: #333; margin-bottom: 15px; display: none;"></div>
+            <button class="btn" onclick="showGlobalSummary()" style="margin-bottom: 15px;">Résumé Global</button>
             <div class="theme-cards">
-                <div class="theme-card" onclick="selectTheme('Voyage de l\'église')" style="background: linear-gradient(135deg, #4caf50, #2e7d32);">
+                <div class="theme-card" data-theme="Voyage de l'église" style="background: linear-gradient(135deg, #4caf50, #2e7d32);">
                     <img src="/api/placeholder/80/80" alt="Voyage de l'église">
                     <h3>Voyage de l'église</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Qui est Dieu?')" style="background: linear-gradient(135deg, #3f51b5, #303f9f);">
+                <div class="theme-card" data-theme="Qui est Dieu?" style="background: linear-gradient(135deg, #3f51b5, #303f9f);">
                     <img src="/api/placeholder/80/80" alt="Qui est Dieu?">
                     <h3>Qui est Dieu?</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Être dirigé par Dieu')" style="background: linear-gradient(135deg, #2196f3, #1565c0);">
+                <div class="theme-card" data-theme="Être dirigé par Dieu" style="background: linear-gradient(135deg, #2196f3, #1565c0);">
                     <img src="/api/placeholder/80/80" alt="Être dirigé par Dieu">
                     <h3>Être dirigé par Dieu</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Le Salut 1')" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
+                <div class="theme-card" data-theme="Le Salut 1" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
                     <img src="/api/placeholder/80/80" alt="Le Salut 1">
                     <h3>Le Salut 1</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('La Bible')" style="background: linear-gradient(135deg, #f44336, #c62828);">
+                <div class="theme-card" data-theme="La Bible" style="background: linear-gradient(135deg, #f44336, #c62828);">
                     <img src="/api/placeholder/80/80" alt="La Bible">
                     <h3>La Bible</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Ressources de la vie intérieure')" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
+                <div class="theme-card" data-theme="Ressources de la vie intérieure" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
                     <img src="/api/placeholder/80/80" alt="Ressources de la vie intérieure">
                     <h3>Ressources de la vie intérieure</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Le Baptême d\'eau')" style="background: linear-gradient(135deg, #00bcd4, #0097a7);">
+                <div class="theme-card" data-theme="Le Baptême d'eau" style="background: linear-gradient(135deg, #00bcd4, #0097a7);">
                     <img src="/api/placeholder/80/80" alt="Le Baptême d'eau">
                     <h3>Le Baptême d'eau</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Le Salut')" style="background: linear-gradient(135deg, #607d8b, #455a64);">
+                <div class="theme-card" data-theme="Le Salut" style="background: linear-gradient(135deg, #607d8b, #455a64);">
                     <img src="/api/placeholder/80/80" alt="Le Salut">
                     <h3>Le Salut</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('L\'importance de la communauté')" style="background: linear-gradient(135deg, #e91e63, #c2185b);">
+                <div class="theme-card" data-theme="L'importance de la communauté" style="background: linear-gradient(135deg, #e91e63, #c2185b);">
                     <img src="/api/placeholder/80/80" alt="L'importance de la communauté">
                     <h3>L'importance de la communauté</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Le baptême du Saint Esprit')" style="background: linear-gradient(135deg, #673ab7, #512da8);">
+                <div class="theme-card" data-theme="Le baptême du Saint Esprit" style="background: linear-gradient(135deg, #673ab7, #512da8);">
                     <img src="/api/placeholder/80/80" alt="Le baptême du Saint Esprit">
                     <h3>Le baptême du Saint Esprit</h3>
                 </div>
-                <div class="theme-card" onclick="selectTheme('Renouvellement des pensées')" style="background: linear-gradient(135deg, #795548, #5d4037);">
+                <div class="theme-card" data-theme="Renouvellement des pensées" style="background: linear-gradient(135deg, #795548, #5d4037);">
                     <img src="/api/placeholder/80/80" alt="Renouvellement des pensées">
                     <h3>Renouvellement des pensées</h3>
+                </div>
+                <div class="theme-card" data-theme="La prière" style="background: linear-gradient(135deg, #4c8bf5, #5865f2);">
+                    <img src="/api/placeholder/80/80" alt="La prière">
+                    <h3>La prière</h3>
                 </div>
             </div>
         </div>
@@ -464,6 +563,24 @@
                 <!-- Résumé des questions et réponses généré dynamiquement ici -->
             </div>
             <button class="back-btn" onclick="backToResults()">Retour</button>
+        </div>
+        
+        <!-- Écran de résumé global -->
+        <div class="global-summary-screen">
+            <div class="global-summary-header">
+                <h2 class="global-summary-title">Résumé Global</h2>
+                <button class="btn" onclick="backToThemes()" style="padding: 10px 20px; font-size: 14px;">Retour</button>
+            </div>
+            <div class="player-name-display" style="color: #333; font-size: 20px;" id="global-summary-player-name">Joueur</div>
+            
+            <div class="global-total-score">
+                <h3>Score Total</h3>
+                <div class="score-value" id="global-total-score">0/0</div>
+            </div>
+            
+            <div class="summary-list" id="global-summary-list">
+                <!-- Résumé global généré dynamiquement ici -->
+            </div>
         </div>
     </div>
     
@@ -601,6 +718,18 @@
                     options: ['Un champ de bataille', 'Un jardin', 'Une église', 'Une forteresse'],
                     correct: 0
                 }
+            ],
+            'La prière': [
+                {
+                    question: 'Quel aspect de la prière renforce notre relation avec Dieu ?',
+                    options: ['La longueur de la prière', 'La qualité de la relation et la sincérité', 'Le nombre de répétitions', 'Le volume de la voix'],
+                    correct: 1
+                },
+                {
+                    question: 'Quelle est l\'importance de la prière dans la vie chrétienne ?',
+                    options: ['Optionnelle selon les besoins', 'Essentielle pour la relation avec Dieu', 'Réservée aux leaders', 'Pratique uniquement le dimanche'],
+                    correct: 1
+                }
             ]
         };
         
@@ -610,6 +739,196 @@
         let score = 0;
         let selectedOption = null;
         let userAnswers = [];
+        let themeScores = {}; // Pour stocker les scores de chaque thème
+        let themeAnswers = {}; // Pour stocker toutes les réponses pour chaque thème
+        
+        function showGlobalSummary() {
+            // Afficher l'écran global
+            document.querySelector('.theme-screen').style.transform = 'translateX(-100%)';
+            document.querySelector('.global-summary-screen').style.transform = 'translateX(0)';
+            
+            // Afficher le nom du joueur
+            document.getElementById('global-summary-player-name').textContent = playerName;
+            
+            // Calculer et afficher le score total
+            let totalCorrect = 0;
+            let totalQuestions = 0;
+            
+            Object.values(themeScores).forEach(score => {
+                totalCorrect += score.score;
+                totalQuestions += score.total;
+            });
+            
+            document.getElementById('global-total-score').textContent = `${totalCorrect}/${totalQuestions}`;
+            
+            // Générer le résumé complet
+            const globalSummaryList = document.getElementById('global-summary-list');
+            globalSummaryList.innerHTML = '';
+            
+            // Pour chaque thème qui a été joué
+            Object.keys(themeAnswers).forEach(themeName => {
+                const themeData = themeAnswers[themeName];
+                
+                const themeSummaryCard = document.createElement('div');
+                themeSummaryCard.className = 'theme-summary-card';
+                
+                const themeSummaryHeader = document.createElement('div');
+                themeSummaryHeader.className = 'theme-summary-header';
+                
+                const themeInfo = document.createElement('div');
+                themeInfo.style.display = 'flex';
+                themeInfo.style.alignItems = 'center';
+                themeInfo.style.flex = '1';
+                
+                const themeSummaryTitle = document.createElement('div');
+                themeSummaryTitle.className = 'theme-summary-title';
+                themeSummaryTitle.textContent = themeName;
+                
+                const expandIcon = document.createElement('span');
+                expandIcon.className = 'expand-icon';
+                expandIcon.textContent = '▼';
+                expandIcon.onclick = function() {
+                    themeSummaryCard.classList.toggle('expanded');
+                    expandIcon.textContent = themeSummaryCard.classList.contains('expanded') ? '▲' : '▼';
+                };
+                
+                const themeSummaryScore = document.createElement('div');
+                themeSummaryScore.className = 'theme-summary-score';
+                const themeScore = themeScores[themeName];
+                themeSummaryScore.textContent = `${themeScore.score}/${themeScore.total}`;
+                
+                themeInfo.appendChild(themeSummaryTitle);
+                themeInfo.appendChild(expandIcon);
+                themeSummaryHeader.appendChild(themeInfo);
+                themeSummaryHeader.appendChild(themeSummaryScore);
+                
+                const themeSummaryContent = document.createElement('div');
+                themeSummaryContent.className = 'theme-summary-content';
+                
+                // Ajouter les réponses pour ce thème
+                themeData.forEach((answer, index) => {
+                    const summaryItem = document.createElement('div');
+                    summaryItem.className = 'summary-item';
+                    summaryItem.style.marginBottom = '15px';
+                    
+                    const questionEl = document.createElement('div');
+                    questionEl.className = 'summary-question';
+                    questionEl.textContent = `Question ${index + 1}: ${answer.question}`;
+                    
+                    const userAnswerEl = document.createElement('div');
+                    userAnswerEl.className = answer.isCorrect ? 'summary-answer correct' : 'summary-answer incorrect';
+                    
+                    const iconEl = document.createElement('span');
+                    iconEl.className = 'summary-answer-icon';
+                    iconEl.textContent = answer.isCorrect ? '✅' : '❌';
+                    
+                    const textEl = document.createElement('span');
+                    textEl.className = 'summary-answer-text';
+                    textEl.textContent = `Votre réponse: ${answer.userAnswer}`;
+                    
+                    userAnswerEl.appendChild(iconEl);
+                    userAnswerEl.appendChild(textEl);
+                    
+                    summaryItem.appendChild(questionEl);
+                    summaryItem.appendChild(userAnswerEl);
+                    
+                    if (!answer.isCorrect) {
+                        const correctAnswerEl = document.createElement('div');
+                        correctAnswerEl.className = 'summary-answer correct';
+                        
+                        const correctIconEl = document.createElement('span');
+                        correctIconEl.className = 'summary-answer-icon';
+                        correctIconEl.textContent = '✓';
+                        
+                        const correctTextEl = document.createElement('span');
+                        correctTextEl.className = 'summary-answer-text';
+                        correctTextEl.textContent = `Réponse correcte: ${answer.correctAnswer}`;
+                        
+                        correctAnswerEl.appendChild(correctIconEl);
+                        correctAnswerEl.appendChild(correctTextEl);
+                        
+                        summaryItem.appendChild(correctAnswerEl);
+                    }
+                    
+                    themeSummaryContent.appendChild(summaryItem);
+                });
+                
+                themeSummaryCard.appendChild(themeSummaryHeader);
+                themeSummaryCard.appendChild(themeSummaryContent);
+                globalSummaryList.appendChild(themeSummaryCard);
+            });
+        }
+        
+        function backToThemes() {
+            document.querySelector('.global-summary-screen').style.transform = 'translateX(100%)';
+            document.querySelector('.theme-screen').style.transform = 'translateX(0)';
+        }
+        
+        function updateThemeScores() {
+            const themeCards = document.querySelectorAll('.theme-card');
+            themeCards.forEach(card => {
+                // Utiliser l'attribut data-theme pour récupérer le nom exact du thème
+                const themeName = card.getAttribute('data-theme');
+                
+                // Vérifier si ce thème a un score
+                if (themeScores[themeName]) {
+                    // Vérifier si un score est déjà affiché
+                    let scoreDisplay = card.querySelector('.theme-score');
+                    if (!scoreDisplay) {
+                        scoreDisplay = document.createElement('span');
+                        scoreDisplay.className = 'theme-score';
+                        card.appendChild(scoreDisplay);
+                    }
+                    const themeData = themeScores[themeName];
+                    scoreDisplay.textContent = `${themeData.score}/${themeData.total}`;
+                }
+            });
+            
+            // Mettre à jour la note totale sur l'écran des thèmes
+            let totalCorrect = 0;
+            let totalQuestions = 0;
+            
+            Object.values(themeScores).forEach(score => {
+                totalCorrect += score.score;
+                totalQuestions += score.total;
+            });
+            
+            const screenTotalScore = document.getElementById('screen-total-score');
+            if (totalQuestions > 0) {
+                screenTotalScore.textContent = `Note totale: ${totalCorrect}/${totalQuestions}`;
+                screenTotalScore.style.display = 'block';
+            } else {
+                screenTotalScore.style.display = 'none';
+            }
+        }
+        
+        function updateTotalScore() {
+            let totalCorrect = 0;
+            let totalQuestions = 0;
+            
+            Object.values(themeScores).forEach(score => {
+                totalCorrect += score.score;
+                totalQuestions += score.total;
+            });
+            
+            const totalScoreDisplay = document.getElementById('total-score');
+            if (totalQuestions > 0) {
+                totalScoreDisplay.textContent = `Note totale: ${totalCorrect}/${totalQuestions}`;
+                totalScoreDisplay.style.display = 'block';
+            } else {
+                totalScoreDisplay.style.display = 'none';
+            }
+        }
+        
+        function initThemeButtons() {
+            const themeCards = document.querySelectorAll('.theme-card');
+            themeCards.forEach(card => {
+                const themeName = card.getAttribute('data-theme');
+                card.onclick = function() {
+                    selectTheme(themeName);
+                };
+            });
+        }
         
         function startQuiz() {
             playerName = document.getElementById('player-name').value.trim();
@@ -623,8 +942,18 @@
                 }, 500);
                 return;
             }
+            
+            // Afficher la note totale
+            updateTotalScore();
+            
             document.querySelector('.title-screen').style.transform = 'translateX(-100%)';
             document.querySelector('.theme-screen').style.transform = 'translateX(0)';
+            
+            // Initialiser les boutons de thème
+            initThemeButtons();
+            
+            // Mettre à jour l'affichage des scores sur les cartes
+            updateThemeScores();
         }
         
         function selectTheme(theme) {
@@ -696,6 +1025,15 @@
             
             // Afficher le nom du joueur
             document.getElementById('result-player-name').textContent = playerName;
+            
+            // Sauvegarder le score pour ce thème
+            themeScores[currentTheme] = {
+                score: score,
+                total: quizData[currentTheme].length
+            };
+            
+            // Sauvegarder les réponses pour ce thème (pour le résumé global)
+            themeAnswers[currentTheme] = userAnswers.slice();
             
             document.querySelector('.score').textContent = score + '/' + quizData[currentTheme].length;
             
@@ -795,6 +1133,10 @@
             document.querySelector('.result-screen').style.transform = 'translateX(100%)';
             document.querySelector('.summary-screen').style.transform = 'translateX(100%)';
             document.querySelector('.theme-screen').style.transform = 'translateX(0)';
+            
+            // Initialiser les boutons de thème et mettre à jour l'affichage des scores
+            initThemeButtons();
+            updateThemeScores();
         }
     </script>
 </body>
